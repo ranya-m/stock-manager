@@ -68,7 +68,7 @@ if(isset($_REQUEST["modifyProduct"])){
         header("location:./products.php");
     }
 
-    $sql = "UPDATE products  SET label = :label, description = :description, price =:price, quantity= :quantity ,user_id = :user:id WHERE product_id = :product_id";
+    $sql = "UPDATE products  SET label = :label, description = :description, price =:price, quantity= :quantity ,user_id = :user_id WHERE product_id = :product_id";
     $params = [
         "label" => $label,
         "description" => $description,

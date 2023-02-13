@@ -1,13 +1,9 @@
 <?php require_once("./components/header.php"); 
-    
+require_once("./helper/connexion.php");
+
 // if (!$logged) {
 //     header("location:./login.php");
 // }
-
-$updating = isset($_REQUEST["modifyProduct"]);
-
-
-require_once("./helper/connexion.php");
 
 
 // FETCHER LES DATA DES PRODUCTS A PARTIR DE LA BASE DE DONNEE POUR PERMETTRE D'AFFICHER SUR LA PAGE (LIST)
@@ -18,6 +14,9 @@ require_once("./helper/connexion.php");
 
 
 // Select one product to fill the form : TO BE MODIFIED (after click on icon)
+$updating = isset($_REQUEST["modifyProduct"]);
+
+
 if ($updating) {
     $updateSql = "SELECT *  from products  WHERE product_id = :product_id;";
     $updateStmt = $conn->prepare($updateSql);
@@ -31,10 +30,12 @@ if ($updating) {
 
 <div class="container mt-4">
     <div class="row">
-<!-- FORM TO ADD A NEW PRODUCT -->
+
+    
+<main class="form-signin col-4">  
     <?php if (!$updating): ?>
-    <main class="form-signin col-4">
-    <form action="./traitementProducts.php" method="post" class="">
+        <!-- FORM TO ADD PRODUCT -->
+    <form action="./traitementProducts.php" method="post">
         <h1 class="h3 mb-3 fw-normal">Add new product</h1>
 
         <div class="form-floating">
@@ -57,10 +58,13 @@ if ($updating) {
         <button class="w-100 btn btn-lg btn-primary" type="submit" name="newProduct">Add</button>
     </form>
     <?php else: ?>
-        <form method="post" action="./traitementProducts.php">
 
-    <h1 class="h3 mb-3 fw-normal">Update Product</h1>
-    <input type="hidden" name="id" value="<?= $product["product_id"] ?>">
+            <!-- FORM TO MODIFY PRODUCT -->
+
+    <form method="post" action="./traitementProducts.php">
+
+    <h1 class="h3 mb-3 fw-normal">Modify Product</h1>
+    <input type="hidden" name="product_id" value="<?= $product["product_id"] ?>">
     <div class="form-floating mb-3">
         <input type="text" name="label" class="form-control" id="label"
             value="<?= $product["label"] ?>" placeholder="name@example.com">
@@ -83,7 +87,7 @@ if ($updating) {
     </div>
 
 
-    <button class="w-100 btn btn-lg btn-primary" type="submit" name="updateProduct">Update</button>
+    <button class="w-100 btn btn-lg btn-primary" type="submit" name="modifyProduct">Modify</button>
 
     </form>
     <?php endif; ?>
@@ -91,8 +95,83 @@ if ($updating) {
 
 
 <!--  LIST OF THE NEW PRODUCT -->
+
     <div class="table-responsive col-8">
-            <table class="table table-striped table-sm">
+           <!-- INPUT TO SEARCH A PRODUCT -->
+      <form action="" method="GET">
+        <div class="input-group mb-4">
+            <div class="form-outline w-50">
+                <input type="search" name="search" placeholder="Search a product by its label or id"  class="form-control"
+                value="<?php if(isset($_GET['search']))
+                    echo $_GET['search'];
+                  ?>"
+                />
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+      </form>
+      
+    <!-- FILTERED SEARCH TABLE -->
+      <?php if(isset($_GET['search'])) :?>
+
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                <th scope="col">Product ID</th>
+                <th scope="col">Label</th>
+                <th scope="col">Description</th>
+                <th scope="col">Price</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Created By</th>
+                <!-- <th scope="col">Modified By</th> -->
+                </tr>
+            </thead>
+            <tbody>
+               <?php
+                    $filterSearch = $_GET['search'];
+                    $searchSql = "SELECT * FROM products WHERE CONCAT(product_id, label) LIKE '%$filterSearch%';";
+                    $searchStmt = $conn->prepare($searchSql);
+                    $searchStmt->execute();
+                    $searchedProducts = $searchStmt->fetchAll(PDO::FETCH_ASSOC);  
+                                 
+                    if(!empty($searchedProducts)){
+                        foreach($searchedProducts as $product) {
+                            ?>
+                            <tr>
+                                <td><?= $product["product_id"] ?></td>
+                                <td><?= $product["label"] ?></td>
+                                <td><?= $product["description"] ?></td>
+                                <td><?= $product["price"]?></td>
+                                <td><?= $product["quantity"] ?></td>
+                                <td><?= $product["username"]?></td>
+                                <td>
+                                    <a href="./products.php?modifyProduct=<?= $product["product_id"] ?>" class="btn btn-sm btn-info"
+                                        title="Modify"> <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="./traitementProducts.php?deleteProduct=<?= $product["product_id"] ?>"
+                                        class="btn btn-sm btn-danger" title="Delete"> <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+                    }else{
+                        ?>
+                        <tr>
+                        <td>No result found</td>
+                        </tr> 
+                        <?php
+                    }
+               ?> 
+
+            </tbody>
+            </table>
+
+    <!-- NON FILTERED SEARCH TABLE -->
+      <?php else :?> 
+        <table class="table table-striped table-sm">
             <thead>
                 <tr>
                 <th scope="col">Product ID</th>
@@ -126,7 +205,10 @@ if ($updating) {
                 <?php endforeach ?>
             </tbody>
             </table>
-        </div>
+      <?php endif ?>
+
+
+    </div>
 
 </div>
 </div>
